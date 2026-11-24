@@ -1,3 +1,6 @@
+> **p3stack** is Tony Evans's fork of [pstack](https://github.com/cursor/plugins/tree/main/pstack) by poteto (Lauren Tan), ported to run from [T3 Code](https://github.com/pingdotgg/t3code) threads on Windows.
+> Install, sync, and conventions: [FORK.md](https://github.com/kingdomis/p3stack/blob/main/FORK.md). Everything below is upstream's README, unchanged.
+
 # pstack
 
 i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta, Netflix, and Cursor. i'm also on the react core team where i help build and maintain react compiler.

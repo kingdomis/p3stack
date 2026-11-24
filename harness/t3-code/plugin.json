@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "p3stack",
+  "version": "0.15.46",
+  "description": "pstack 0.15.46 for T3 Code. A fork of poteto's (Lauren Tan's) pstack: if you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence.",
+  "author": {
+    "name": "Tony Evans"
+  },
+  "homepage": "https://github.com/kingdomis/p3stack",
+  "repository": "https://github.com/kingdomis/p3stack",
+  "license": "MIT",
+  "keywords": [
+    "pstack",
+    "poteto-mode",
+    "workflow",
+    "principles",
+    "agent-style",
+    "subagents",
+    "unslop",
+    "t3code"
+  ]
+}
