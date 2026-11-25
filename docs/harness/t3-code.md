@@ -36,14 +36,14 @@ pstack skills use Cursor names. This is p3stack's adapter. In T3 Code, read this
 
 ## Models
 
-Read `~/.p3stack/pstack-models.md` (Windows `%USERPROFILE%\.p3stack\pstack-models.md`) before any skill that names a role. It replaces Cursor's `~/.cursor/rules/pstack-models.mdc` and nothing loads it for you. If the file doesn't exist, or a role's line is missing, use the defaults below, never the skill's own upstream default:
+Read `~/.p3stack/pstack-models.md` (Windows `%USERPROFILE%\.p3stack\pstack-models.md`) before any skill that names a role. It replaces Cursor's `~/.cursor/rules/pstack-models.mdc` and nothing loads it for you. If the file doesn't exist, or a role's line is missing, use the defaults below, never the skill's own upstream default. They are setup-pstack's `large` budget:
 
 ```
-feature, refactoring: claude-opus-5-5-xhigh
-bug-fix: claude-opus-5-5-xhigh
-perf-issue: claude-opus-5-5-xhigh
-hillclimb: claude-opus-5-5-xhigh
-judgment and prose: claude-opus-5-5-xhigh
+feature, refactoring: claude-opus-5-5-high
+bug-fix: claude-opus-5-5-high
+perf-issue: claude-opus-5-5-high
+hillclimb: claude-opus-5-5-high
+judgment and prose: gemini-4-neon-xhigh
 swarm workers: claude-opus-5-5-high
 arena runners: claude-opus-5-5-high, gemini-4-neon-xhigh, gpt-6.2-sol-xhigh, grok-4.7-build-fast-xhigh
 arena cross-judge pool: gpt-6.2-sol-xhigh, gemini-4-neon-xhigh, grok-4.7-build-fast-xhigh, claude-opus-5-5-high
@@ -51,6 +51,8 @@ interrogate reviewers: claude-opus-5-5-high, gemini-4-neon-xhigh, gpt-6.2-sol-xh
 ```
 
 A skill's own default slug (such as `claude-fable-5-2-high` or `claude-opus-5-5-high-fast`) is used only where neither the file nor this table has the role.
+
+A file whose `# budget` line has no Opus 5.5 effort (such as `# budget: large (xhigh)`) predates the four budgets: honor its lines, and tell the user once per thread to rerun setup-pstack. This table and the setup-pstack section below replace the defaults, budgets and ladder that upstream's README and `docs/guide` describe. A `judgment and prose` seat runs at its line's level as written: poteto-mode's step down for judgment and its `gemini-4-neon-xhigh` rule for Gemini seats don't change it.
 
 ### Slug to seat target
 
@@ -71,7 +73,7 @@ Families for the skills' same-family fallback rules are the ones arena Phase A d
 - **Always pass the effort.** Defaults differ by machine and model. Never write or pass an effort above `xhigh`.
 - **One capabilities call per thread.** Call `orchestrator_capabilities` once, before the first `delegate_task`. It serves the mode precondition and instance choice for the whole thread. Right after it, save what the thread needs (`parentThreadId`, `inheritedProviderInstanceId`, `inheritedModel`, `inheritedOptions`, both modes, and each enabled instance's `providerInstanceId`, `driverKind`, and model ids, each with its effort values) to `<runs>\caps-<id>.json`, where `<id>` is your `parentThreadId` with every character outside `A-Za-z0-9._-` replaced by `-` (thread ids contain `:`, which Windows file names can't). If the result is no longer in your context after compaction, read that file. Never call again for that reason.
 - **The list is short.** The capabilities result omits models, and its `omittedModels` count (or its absence) says nothing about how many. Dispatch a configured model as configured even when the list omits it: `delegate_task` checks it against T3's full catalog.
-- **Missing model.** Only after `delegate_task` rejects a seat's model (`model_unavailable`): Dispatch step 4 records the row as `fallback pending`, which holds the continuation check, and you resolve it in the same turn (a later turn that finds such a row resumes here). Read the advertised models the rejection text lists. If it lists none, make one `orchestrator_capabilities(search:"<family prefix>")` call, such as `search:"claude-opus"` (T3 allows a call after an error; searching for the rejected id finds nothing). Then follow the skill's own fallback, in its own order (swarm tries the `swarm workers` default from the table above before a same-family slug; others take the nearest advertised same-family slug, or drop the seat), and name the change in your reply. A substitute is a new seat with a new number: in one `seats.md` rewrite, write its `planned` row (Dispatch step 3, naming the seat it replaces) and mark the old row rejected; then dispatch it, in the same turn when the skill's rule allows it. If the rule drops the seat, mark it rejected. Any other substitution needs the user's say-so: mark the row `pending substitution` with the proposed substitute's slug, which still holds the continuation check, and ask in plain text. On a yes, make the same one rewrite, then dispatch. On a no, mark it rejected.
+- **Missing model.** Only after `delegate_task` rejects a seat's model (`model_unavailable`): Dispatch step 4 records the row as `fallback pending`, which holds the continuation check, and you resolve it in the same turn (a later turn that finds such a row resumes here). Read the advertised models the rejection text lists. If it lists none, make one `orchestrator_capabilities(search:"<family prefix>")` call, such as `search:"claude-opus"` (T3 allows a call after an error; searching for the rejected id finds nothing). Then follow the skill's own fallback, in its own order (swarm tries the `swarm workers` default from the table above before a same-family slug; others take the nearest advertised same-family slug, or drop the seat), and name the change in your reply. A role with one seat, such as `judgment and prose`, is never dropped: with no advertised same-family slug, its substitute is `inherit-parent`, which needs no say-so. When Instance finds no enabled instance of a seat's `driverKind`, treat the seat as rejected in the same way, without a `delegate_task` call. A substitute is a new seat with a new number: in one `seats.md` rewrite, write its `planned` row (Dispatch step 3, naming the seat it replaces) and mark the old row rejected; then dispatch it, in the same turn when the skill's rule allows it. If the rule drops the seat, mark it rejected. Any other substitution needs the user's say-so: mark the row `pending substitution` with the proposed substitute's slug, which still holds the continuation check, and ask in plain text. On a yes, make the same one rewrite, then dispatch. On a no, mark it rejected.
 
 ## Seats
 
@@ -300,10 +302,16 @@ A worktree seat leaves its `t3/<slug>` branch and its worktree under `~/.t3/work
 
 - **Detect.** Use your one `orchestrator_capabilities` call. The detected slugs are `<model-id>-<effort>` for each model listed on any enabled instance and each of its effort values among `low`, `medium`, `high`, `xhigh` (never `max`, `ultra`, or `ultrathink`). Offer only choices that call confirms. A default whose model the short list omits is not offered: name it and offer the nearest confirmed same-family slug.
 - **Validate** (replaces step 4 for a slug the user types). `inherit-parent` and `auto` always pass. For anything else, first drop a trailing `-fast` tier suffix and say so. The rest must parse as `<model-id>-<effort>` with an effort of `xhigh` or below and a known vendor prefix, and when the call lists its model, an effort the call lists for that model (effort ranges differ by model); otherwise ask again. If the call didn't confirm its model, say so and write it only after the user confirms it; a seat checks it at dispatch.
-- **Load.** Skip step 2's migration rules. The p3stack file never had legacy values.
+- **Load.** Skip step 2's migration rules, except p3stack's own: in a file whose `# budget` line has no Opus 5.5 effort, a `judgment and prose` value on `claude-opus-5-5` is the old default, not a choice. It takes the Models table's model. Tell the user which values you replaced.
 - **Defaults.** Step 5's defaults are exactly the Models table above: no Fable in the panels, no `-fast` tier suffix.
-- **Budget.** Upstream's ladder, applied to each entry: every slug, panel entries included, takes its own default effort moved by the budget. At `medium`, `claude-opus-5-5-high` becomes `claude-opus-5-5-medium` and each `-xhigh` entry becomes `-high`. Replace "Opus 5.5 always runs its `-fast` slug" with: never write a trailing `-fast` tier suffix after the effort (`grok-4.7-build-fast` keeps the `-fast` inside its model id).
-- **Write.** Write the whole file with no frontmatter: the first comment line, `# defaults: 3`, the `# budget` line, then one line per role in the Models table's order above. Leave out upstream's `inherit-parent`/`auto` comment line (it names Cursor's `Task` `model` field); the aliases run the seat on your own target, as in the table above. Write UTF-8 without a BOM, LF line ends, and one final newline. From PowerShell, use `[IO.File]::WriteAllText` with the lines joined by `[char]10`, never `Set-Content` or `Out-File`. A re-run with the same answers writes the same bytes.
+- **Budget** (replaces step 3(a)'s options, and step 3(b) from "Each role has a target effort" to the end of its paragraph). Offer these four options with these exact labels, and name the current budget when the file records one. With no file, say that `large` matches the defaults.
+  - `xlarge — Opus 5.5 xhigh, others xhigh`
+  - `large — Opus 5.5 high, others xhigh`
+  - `medium — Opus 5.5 medium, others high`
+  - `small — Opus 5.5 medium, others medium`
+
+  A budget sets the effort by model, not by role. Every `claude-opus-5-5` slug in every role, panel entries included, takes the budget's Opus 5.5 effort. Every other real slug, Gemini 4 Neon in `judgment and prose` included, takes its "others" effort. So at `xlarge` every entry is `-xhigh`, and at `small` every entry is `-medium`. A re-run still keeps any role the user changed by family, list, or alias (the start of step 3(b)), and `inherit-parent` and `auto` don't change. When a slug's model doesn't list its budget effort, use the same model's detected slug with the highest effort below it; if that model has none, the role needs a choice. A `# budget` line without an Opus 5.5 effort (`large (xhigh)`, `medium (high)`, `small (medium)`) is from before these four budgets: name its label as the current budget, and say that each budget now sets Opus 5.5 apart from the other models. In step 3(c), mark each entry whose value differs from the current file. Never write a trailing `-fast` tier suffix after the effort (`grok-4.7-build-fast` keeps the `-fast` inside its model id).
+- **Write.** Write the whole file with no frontmatter: the first comment line, `# defaults: 3`, the `# budget` line (`# budget: `, the chosen label, then in parentheses the option's text after the dash, so `# budget: large (Opus 5.5 high, others xhigh)`), then one line per role in the Models table's order above. Leave out upstream's `inherit-parent`/`auto` comment line (it names Cursor's `Task` `model` field); the aliases run the seat on your own target, as in the table above. Write UTF-8 without a BOM, LF line ends, and one final newline. From PowerShell, use `[IO.File]::WriteAllText` with the lines joined by `[char]10`, never `Set-Content` or `Out-File`. A re-run with the same answers writes the same bytes.
 - **Confirm.** The file applies to the next skill that reads it, in any thread on this machine.
 
 ## Paths
