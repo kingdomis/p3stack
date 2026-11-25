@@ -90,6 +90,11 @@ function read(path, executable) {
   return { bytes, executable, binary };
 }
 
+// A conflicted source would copy its conflict markers into the tree, so refuse until every merge conflict outside
+// harness/ is resolved. A conflict inside harness/ is fine: regenerating resolves it.
+const unmerged = [...new Set(nulList(git(["ls-files", "-u", "-z", "--", ".", `:(exclude)${OUT}`])).map((record) => record.split("\t")[1]))];
+if (unmerged.length > 0) fail(unmerged.map((path) => `${path} is unmerged. Resolve the conflict and \`git add\` it before generating.`));
+
 const untracked = nulList(git(["ls-files", "--others", "--exclude-standard", "-z", "--", ...SOURCES]));
 if (untracked.length > 0) fail(untracked.map((path) => `${path} is untracked. Commit it, ignore it, or delete it before generating.`));
 

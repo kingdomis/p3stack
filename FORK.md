@@ -16,24 +16,39 @@ Then, in each open T3 thread, use **Restart agent session** from the command pal
 
 Don't sync while a p3stack run is active: `<p3stack>` is a junction into this working tree.
 
+Run the p3stack steps in **this checkout**: the one the installer registered (the `p3stack` marketplace and `~/.p3stack/tree` point at it). From another clone or worktree the installer's preflight refuses. Start from the branch that holds `harness/` (`t3-port`), not upstream's `main`, with a clean tree. Run the commands in Git Bash or PowerShell 7 (Windows PowerShell 5.1 rejects `&&`).
+
 ```
 # in a cursor/plugins clone (e.g. %TEMP%\p3stack-split)
 git fetch origin && git checkout origin/main
 git subtree split --prefix=pstack -b pstack-upstream
-# in p3stack
+git diff <generatorCommit>..origin/main -- scripts/generate-pstack-harness-trees.mjs   # upstream generator changes to port by hand
+# in this p3stack checkout, on t3-port, clean
 git fetch <split-clone-path> pstack-upstream
 git checkout -b sync/upstream-<date>
-git merge --no-ff --no-commit FETCH_HEAD
-git diff <last-split-commit>..FETCH_HEAD -- skills agents docs/harness   # review behavior changes against t3-code.md
-# port upstream generator changes by hand (diff scripts/generate-pstack-harness-trees.mjs since t3/upstream.json's generatorCommit)
-# update t3/upstream.json (and t3-code.md if the review needs it), then: git add t3/upstream.json docs/harness/t3-code.md
+git merge --no-ff --no-commit FETCH_HEAD      # to back out: git merge --abort, git checkout t3-port, git branch -D sync/upstream-<date>
+git diff --stat <splitCommit>..MERGE_HEAD    # every upstream change, including plugin.json and docs/guide
+git diff <splitCommit>..MERGE_HEAD -- skills agents docs   # review behavior changes against t3-code.md
+# resolve each conflict and git add it: the generator refuses while a path outside harness/ is unmerged
+# update t3/upstream.json (fields below), then git add it and every source you changed (t3-code.md, ported generator code)
 node scripts/generate-t3-tree.mjs          # writes harness/, stages it, sets modes
-node scripts/generate-t3-tree.mjs --check  # content, modes, and nothing unstaged
+node scripts/generate-t3-tree.mjs --check  # harness/ content, modes, nothing unstaged under harness/
+git status                                 # nothing unstaged anywhere: --check doesn't see an unstaged source
 git commit                                 # one merge commit: upstream, provenance, regenerated tree
-pwsh scripts/install-t3.ps1                # preflight, refresh the junction, reinstall the Claude plugin per config dir
+git checkout t3-port && git merge --ff-only sync/upstream-<date> && git branch -d sync/upstream-<date>
+pwsh scripts/install-t3.ps1                # preflight, junction, Claude plugin per config dir, Codex junctions, Antigravity copies
+grok inspect --json                        # after a version bump: p3stack's path must end in the new version
 ```
 
-The generator fails when a Cursor term it knows has no adapter text. It can't see a new Cursor term or a changed spawn behavior, so the diff review step is not optional. Conflicts land only in `README.md` (the banner) and in any upstream `.gitattributes` or `.claude-plugin/`. `harness/` is never in the split; always regenerate it.
+The `t3/upstream.json` fields:
+- `pstackVersion`: `plugin.json`'s `version`.
+- `cursorPluginsCommit`: the last `cursor/plugins` commit that touches `pstack/` (`git log -1 --format=%H origin/main -- pstack`).
+- `splitCommit`: `git rev-parse MERGE_HEAD`.
+- `generatorCommit`: the `cursor/plugins` commit whose generator you reviewed (`git log -1 --format=%H origin/main -- scripts/generate-pstack-harness-trees.mjs`), whether or not anything needed porting.
+
+`<splitCommit>` and `<generatorCommit>` in the commands are the values before you update them. Review against `MERGE_HEAD`, which stays fixed while the merge is open; `FETCH_HEAD` changes with any later fetch. If upstream changed only its generator, the split is unchanged and the merge says "Already up to date": port the change by hand on `t3-port`, update `generatorCommit`, regenerate, and commit it as fork work. Then use **Restart agent session** in each open T3 thread.
+
+The generator fails when a Cursor term it knows has no adapter text, and when `pstackVersion` doesn't match `plugin.json`. It can't see a new Cursor term or a changed spawn behavior, so the diff review step is not optional. Conflicts land only in `README.md` (an edit next to the banner) and in any upstream `.gitattributes` or `.claude-plugin/`. `harness/` is never in the split; always regenerate it. After a version bump, Claude Code keeps the old version's folder under `plugins/cache/p3stack/p3stack/`; `installed_plugins.json` names only the new one. If `grok inspect --json` shows p3stack's path under the old version, delete that old folder.
 
 ## Conventions
 
