@@ -1,7 +1,7 @@
 {
-  "pstackVersion": "0.15.46",
-  "cursorPluginsCommit": "0b46ec399d55f2829e88822998f53b84944837d3",
-  "splitCommit": "d177ccc76b72cce50b1a73e2528018aca22a6fa3",
+  "pstackVersion": "0.15.48",
+  "cursorPluginsCommit": "9e278fe4d4ecd8bfe98b1b79bf4be662efb338cc",
+  "splitCommit": "3431628d879a42e1234c54b7d6b111fec9b729b9",
   "generatorCommit": "1b800800583ee8ff7f2676caf7a5cb7f0804be85",
   "generator": "scripts/generate-pstack-harness-trees.mjs"
 }
