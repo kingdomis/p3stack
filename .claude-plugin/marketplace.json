@@ -1,0 +1,13 @@
+{
+  "name": "p3stack",
+  "owner": {
+    "name": "Tony Evans"
+  },
+  "plugins": [
+    {
+      "name": "p3stack",
+      "source": "./harness/t3-code",
+      "description": "pstack for T3 Code. A fork of poteto's (Lauren Tan's) pstack."
+    }
+  ]
+}

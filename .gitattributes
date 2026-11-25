@@ -1,0 +1,4 @@
+harness/** text=auto eol=lf
+*.sh text eol=lf
+*.jpg binary
+*.png binary
