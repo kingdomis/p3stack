@@ -49,11 +49,11 @@ The `t3/upstream.json` fields:
 
 `<splitCommit>` and `<generatorCommit>` in the commands are the values before you update them. Review against `MERGE_HEAD`, which stays fixed while the merge is open; `FETCH_HEAD` changes with any later fetch. If upstream changed only its generator, the split is unchanged and the merge says "Already up to date": port the change by hand on `main`, update `generatorCommit`, regenerate, and commit it as fork work. Then use **Restart agent session** in each open T3 thread.
 
-The generator fails when a Cursor term it knows has no adapter text, and when `pstackVersion` doesn't match `plugin.json`. It can't see a new Cursor term or a changed spawn behavior, so the diff review step is not optional. Conflicts land only in `README.md` (an edit next to the banner) and in any upstream `.gitattributes` or `.claude-plugin/`. `harness/` is never in the split; always regenerate it. After a version bump, Claude Code keeps the old version's folder under `plugins/cache/p3stack/p3stack/`; `installed_plugins.json` names only the new one. If `grok inspect --json` shows p3stack's path under the old version, delete that old folder.
+The generator fails when a Cursor term it knows has no adapter text, and when `pstackVersion` doesn't match `plugin.json`. It can't see a new Cursor term or a changed spawn behavior, so the diff review step is not optional. Conflicts land only in `README.md` (an edit next to the banner) and in any upstream `.gitattributes`, `.claude-plugin/`, `AGENTS.md` or `CLAUDE.md`. `harness/` is never in the split; always regenerate it. After a version bump, Claude Code keeps the old version's folder under `plugins/cache/p3stack/p3stack/`; `installed_plugins.json` names only the new one. If `grok inspect --json` shows p3stack's path under the old version, delete that old folder.
 
 ## Conventions
 
-- Never edit an upstream-owned file except the README banner. Fork content lives in new files: `docs/harness/t3-code.md`, `t3/**`, `scripts/*t3*`, `FORK.md`, `.gitattributes`, `.claude-plugin/marketplace.json`. Never hand-edit `harness/`.
+- Never edit an upstream-owned file except the README banner. Fork content lives in new files: `docs/harness/t3-code.md`, `t3/**`, `scripts/*t3*`, `FORK.md`, `AGENTS.md`, `CLAUDE.md`, `.gitattributes`, `.claude-plugin/marketplace.json`. Never hand-edit `harness/`.
 - Commit messages: `t3: …` for fork work, `sync: upstream pstack <upstream-sha>` for merges.
 - Keep the branch that holds `harness/` checked out in this checkout. The junction follows the working tree, so do other work in a separate worktree.
 - The local `/build-plan/` line in `.gitignore` belongs in `.git/info/exclude`, so `.gitignore` stays upstream's.
